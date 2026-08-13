@@ -11,9 +11,11 @@
   const context = canvas.getContext("2d");
   if (!context) return;
 
-  const GRID = 44;
-  const TRAIL_LENGTH = 24;
-  const GLOW_RADIUS = 165;
+  const GRID = 30;
+  const GLOW_RADIUS = 180;
+  const TRAIL_LIFETIME = 680;
+  const TRAIL_SPACING = 9;
+  const MAX_TRAIL_POINTS = 78;
   const accent = "236, 120, 79";
 
   let width = 0;
@@ -26,7 +28,7 @@
   let previousPointer = null;
 
   const target = { x: 0, y: 0, inside: false };
-  const trail = Array.from({ length: TRAIL_LENGTH }, () => ({ x: 0, y: 0 }));
+  const trail = [];
   const pulses = [];
 
   function resize() {
@@ -41,13 +43,6 @@
     context.setTransform(density, 0, 0, density, 0, 0);
   }
 
-  function seedTrail(x, y) {
-    trail.forEach((point) => {
-      point.x = x;
-      point.y = y;
-    });
-  }
-
   function wake() {
     if (!frame) frame = requestAnimationFrame(draw);
   }
@@ -60,6 +55,25 @@
     };
   }
 
+  function appendTrail(from, to, now) {
+    const distance = Math.hypot(to.x - from.x, to.y - from.y);
+    if (distance < 1.5) return;
+
+    const steps = Math.min(32, Math.max(1, Math.ceil(distance / TRAIL_SPACING)));
+    for (let step = 1; step <= steps; step += 1) {
+      const progress = step / steps;
+      trail.push({
+        x: from.x + (to.x - from.x) * progress,
+        y: from.y + (to.y - from.y) * progress,
+        born: now - (steps - step) * 2,
+      });
+    }
+
+    if (trail.length > MAX_TRAIL_POINTS) {
+      trail.splice(0, trail.length - MAX_TRAIL_POINTS);
+    }
+  }
+
   hero.addEventListener("pointerenter", (event) => {
     const point = locate(event);
     target.x = point.x;
@@ -67,26 +81,24 @@
     target.inside = true;
     previousPointer = point;
     lastMovement = performance.now();
-    seedTrail(point.x, point.y);
     wake();
   });
 
   hero.addEventListener("pointermove", (event) => {
     const point = locate(event);
-    const movement = previousPointer
-      ? Math.hypot(point.x - previousPointer.x, point.y - previousPointer.y)
-      : 0;
+    const now = performance.now();
+
+    if (previousPointer) appendTrail(previousPointer, point, now);
+
+    if (!previousPointer || Math.hypot(point.x - previousPointer.x, point.y - previousPointer.y) > 1.5) {
+      lastMovement = now;
+      hasLanded = false;
+    }
 
     target.x = point.x;
     target.y = point.y;
     target.inside = true;
     previousPointer = point;
-
-    if (movement > 1.5) {
-      lastMovement = performance.now();
-      hasLanded = false;
-    }
-
     wake();
   });
 
@@ -98,14 +110,16 @@
   });
 
   function drawGridLights() {
+    if (visibleStrength < 0.01) return;
+
     const startX = Math.floor((target.x - GLOW_RADIUS) / GRID) * GRID;
     const endX = Math.ceil((target.x + GLOW_RADIUS) / GRID) * GRID;
     const startY = Math.floor((target.y - GLOW_RADIUS) / GRID) * GRID;
     const endY = Math.ceil((target.y + GLOW_RADIUS) / GRID) * GRID;
 
     context.save();
-    context.shadowColor = `rgba(${accent}, 0.7)`;
-    context.shadowBlur = 9;
+    context.shadowColor = `rgba(${accent}, 0.54)`;
+    context.shadowBlur = 7;
 
     for (let x = startX; x <= endX; x += GRID) {
       for (let y = startY; y <= endY; y += GRID) {
@@ -113,10 +127,11 @@
         if (distance > GLOW_RADIUS) continue;
 
         const proximity = 1 - distance / GLOW_RADIUS;
-        const alpha = proximity * proximity * 0.72 * visibleStrength;
+        const gradient = proximity ** 1.55;
+        const alpha = gradient * 0.64 * visibleStrength;
         context.beginPath();
         context.fillStyle = `rgba(${accent}, ${alpha})`;
-        context.arc(x, y, 1 + proximity * 1.35, 0, Math.PI * 2);
+        context.arc(x, y, 0.5 + gradient * 0.9, 0, Math.PI * 2);
         context.fill();
       }
     }
@@ -124,43 +139,33 @@
     context.restore();
   }
 
-  function drawTrail() {
-    trail[0].x += (target.x - trail[0].x) * 0.38;
-    trail[0].y += (target.y - trail[0].y) * 0.38;
-
-    for (let index = 1; index < trail.length; index += 1) {
-      const leader = trail[index - 1];
-      const point = trail[index];
-      const pull = 0.31 + index * 0.002;
-      point.x += (leader.x - point.x) * pull;
-      point.y += (leader.y - point.y) * pull;
-    }
-
+  function drawTrail(now) {
     context.save();
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.shadowColor = `rgba(${accent}, 0.46)`;
-    context.shadowBlur = 11;
+    context.shadowColor = `rgba(${accent}, 0.34)`;
+    context.shadowBlur = 7;
 
-    for (let index = trail.length - 1; index > 0; index -= 1) {
-      const age = 1 - index / trail.length;
+    for (let index = trail.length - 1; index >= 0; index -= 1) {
+      const point = trail[index];
+      const age = now - point.born;
+      if (age >= TRAIL_LIFETIME) {
+        trail.splice(index, 1);
+        continue;
+      }
+
+      const remaining = 1 - age / TRAIL_LIFETIME;
+      const alpha = remaining ** 1.8 * 0.48;
+      const radius = 0.55 + remaining * 1.15;
       context.beginPath();
-      context.moveTo(trail[index].x, trail[index].y);
-      context.lineTo(trail[index - 1].x, trail[index - 1].y);
-      context.lineWidth = 0.5 + age * 2.4;
-      context.strokeStyle = `rgba(${accent}, ${age * 0.52 * visibleStrength})`;
-      context.stroke();
+      context.fillStyle = `rgba(${accent}, ${alpha})`;
+      context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      context.fill();
     }
 
-    context.beginPath();
-    context.fillStyle = `rgba(${accent}, ${0.68 * visibleStrength})`;
-    context.arc(trail[0].x, trail[0].y, 2.4, 0, Math.PI * 2);
-    context.fill();
     context.restore();
   }
 
   function addLandingPulse(now) {
-    if (!target.inside || hasLanded || now - lastMovement < 150) return;
+    if (!target.inside || hasLanded || now - lastMovement < 180) return;
 
     pulses.push({
       x: Math.round(target.x / GRID) * GRID,
@@ -173,7 +178,7 @@
   function drawPulses(now) {
     for (let index = pulses.length - 1; index >= 0; index -= 1) {
       const pulse = pulses[index];
-      const progress = (now - pulse.started) / 900;
+      const progress = (now - pulse.started) / 1100;
       if (progress >= 1) {
         pulses.splice(index, 1);
         continue;
@@ -181,9 +186,9 @@
 
       const eased = 1 - (1 - progress) ** 3;
       context.beginPath();
-      context.strokeStyle = `rgba(${accent}, ${(1 - progress) * 0.34})`;
-      context.lineWidth = 1;
-      context.arc(pulse.x, pulse.y, 5 + eased * 32, 0, Math.PI * 2);
+      context.strokeStyle = `rgba(${accent}, ${(1 - progress) * 0.2})`;
+      context.lineWidth = 0.8;
+      context.arc(pulse.x, pulse.y, 4 + eased * 21, 0, Math.PI * 2);
       context.stroke();
     }
   }
@@ -197,13 +202,11 @@
 
     addLandingPulse(now);
     drawGridLights();
-    drawTrail();
+    drawTrail(now);
     drawPulses(now);
 
-    if (target.inside || visibleStrength > 0.015 || pulses.length) {
+    if (target.inside || visibleStrength > 0.015 || trail.length || pulses.length) {
       frame = requestAnimationFrame(draw);
-    } else {
-      context.clearRect(0, 0, width, height);
     }
   }
 

@@ -135,7 +135,7 @@ nav a:hover {
     linear-gradient(rgba(167, 170, 168, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(167, 170, 168, 0.045) 1px, transparent 1px);
   background-position: center;
-  background-size: 44px 44px;
+  background-size: 30px 30px;
   content: "";
   mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
 }
@@ -212,6 +212,15 @@ h1 {
   text-transform: uppercase;
 }
 
+.hero-meta > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hero-meta > span:first-child {
+  padding-left: 0.35rem;
+}
+
 .status-dot {
   display: inline-block;
   width: 0.45rem;
@@ -219,7 +228,25 @@ h1 {
   margin-right: 0.55rem;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(236, 120, 79, 0.1);
+  box-shadow:
+    0 0 0 3px rgba(236, 120, 79, 0.08),
+    0 0 7px rgba(236, 120, 79, 0.18);
+  animation: status-breathe 5.4s ease-in-out infinite;
+}
+
+@keyframes status-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(236, 120, 79, 0.07),
+      0 0 6px rgba(236, 120, 79, 0.16);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(236, 120, 79, 0.11),
+      0 0 14px rgba(236, 120, 79, 0.38);
+  }
 }
 
 .content-grid {
@@ -527,6 +554,10 @@ footer p {
 
   .hero-canvas {
     display: none;
+  }
+
+  .status-dot {
+    animation: none;
   }
 }
 
