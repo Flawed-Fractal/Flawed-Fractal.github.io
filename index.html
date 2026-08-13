@@ -18,6 +18,7 @@
     <link rel="canonical" href="https://flawed-fractal.github.io/" />
     <link rel="alternate" type="application/rss+xml" title="Chris Cowden — Notes" href="/feed.xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/effects.js" defer></script>
     <title>Chris Cowden — Notes</title>
   </head>
   <body>
@@ -36,16 +37,19 @@
       </header>
 
       <main id="main">
-        <section class="hero" aria-labelledby="hero-title">
-          <p class="eyebrow">A small internet notebook</p>
-          <h1 id="hero-title">Notes made slowly,<br />about things moving quickly.</h1>
-          <p class="hero-copy">
-            Mathematics, machines, medicine, philosophy, and occasional attempts
-            to make the pieces cohere.
-          </p>
-          <div class="hero-meta">
-            <span><span class="status-dot" aria-hidden="true"></span>Writing from Ann Arbor</span>
-            <span>Est. 2026</span>
+        <section class="hero hero-reactive" aria-labelledby="hero-title">
+          <canvas class="hero-canvas" aria-hidden="true"></canvas>
+          <div class="hero-content">
+            <p class="eyebrow">A small internet notebook</p>
+            <h1 id="hero-title">Notes made slowly,<br />about things moving quickly.</h1>
+            <p class="hero-copy">
+              Mathematics, machines, medicine, philosophy, and occasional attempts
+              to make the pieces cohere.
+            </p>
+            <div class="hero-meta">
+              <span><span class="status-dot" aria-hidden="true"></span>Writing from Ann Arbor</span>
+              <span>Est. 2026</span>
+            </div>
           </div>
         </section>
 
