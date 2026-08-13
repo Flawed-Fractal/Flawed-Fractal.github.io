@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>Chris Cowden — Notes</title>
+    <link>https://flawed-fractal.github.io/</link>
+    <description>Notes on mathematics, machines, medicine, philosophy, and the thoughts between them.</description>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 13 Aug 2026 12:00:00 -0400</lastBuildDate>
+    <item>
+      <title>An empty notebook, deliberately</title>
+      <link>https://flawed-fractal.github.io/posts/a-small-place.html</link>
+      <guid>https://flawed-fractal.github.io/posts/a-small-place.html</guid>
+      <pubDate>Thu, 13 Aug 2026 12:00:00 -0400</pubDate>
+      <description>A short explanation for why this place exists, and why it is starting with almost nothing in it.</description>
+    </item>
+  </channel>
+</rss>
