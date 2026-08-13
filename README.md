@@ -5,7 +5,7 @@ My small personal blog for GitHub Pages.
 ## Publishing
 
 Note to self: This repo is named `Flawed-Fractal.github.io`. Once pushed
-to that repository on GitHub, the site will appear at:
+to changes should appear at:
 
 https://flawed-fractal.github.io/
 
